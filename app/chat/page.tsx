@@ -51,7 +51,7 @@ export default async function ChatPage() {
       text,
       image_url,
       created_at,
-      profiles (
+      profiles:profiles!messages_user_id_fkey (
         display_name
       )
     `)
