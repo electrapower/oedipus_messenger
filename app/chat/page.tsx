@@ -11,7 +11,7 @@ type RawMessageRow = {
   created_at: string
   profiles: {
     display_name: string
-  } | null
+  }[]
 }
 
 type MessageRow = {
@@ -50,9 +50,12 @@ export default async function ChatPage() {
 
   const preparedMessages: MessageRow[] = await Promise.all(
     (messages ?? []).map(async (msg: RawMessageRow) => {
+      const profile = msg.profiles?.[0] ?? null
+
       if (!msg.image_url) {
         return {
           ...msg,
+          profiles: profile,
           signed_image_url: null,
         }
       }
@@ -63,6 +66,7 @@ export default async function ChatPage() {
 
       return {
         ...msg,
+        profiles: profile,
         signed_image_url: data?.signedUrl ?? null,
       }
     })
@@ -87,7 +91,7 @@ export default async function ChatPage() {
           }}
         >
           <div>
-            <h1 style={{ margin: 0, fontSize: 32, color: '#0F6E75' }}>чат</h1>
+            <h1 style={{ margin: 0, fontSize: 32, color: '#0F6E75' }}>Чат</h1>
             <p style={{ margin: '6px 0 0 0', color: '#734765' }}>
               эдип советует присмотреться
             </p>
