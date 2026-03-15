@@ -6,16 +6,20 @@ import { formatEuropeanDate } from '@/lib/format-date'
 
 type RawMessageRow = {
   id: string
+  user_id: string
   text: string | null
   image_url: string | null
   created_at: string
-  profiles: {
-    display_name: string
-  }[]
+}
+
+type ProfileRow = {
+  id: string
+  display_name: string | null
 }
 
 type MessageRow = {
   id: string
+  user_id: string
   text: string | null
   image_url: string | null
   created_at: string
@@ -48,23 +52,33 @@ export default function ChatRoom({ initialMessages }: Props) {
         .from('messages')
         .select(`
           id,
+          user_id,
           text,
           image_url,
-          created_at,
-          profiles:profiles!messages_user_id_fkey (
-            display_name
-          )
+          created_at
         `)
         .order('created_at', { ascending: true })
 
+      const userIds = [...new Set((data ?? []).map((msg) => msg.user_id))]
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', userIds)
+
+      const profileMap = new Map<string, string | null>()
+      ;(profiles ?? []).forEach((profile: ProfileRow) => {
+        profileMap.set(profile.id, profile.display_name)
+      })
+
       const preparedMessages: MessageRow[] = await Promise.all(
         (data ?? []).map(async (msg: RawMessageRow) => {
-          const profile = msg.profiles?.[0] ?? null
+          const displayName = profileMap.get(msg.user_id) ?? null
 
           if (!msg.image_url) {
             return {
               ...msg,
-              profiles: profile,
+              profiles: displayName ? { display_name: displayName } : null,
               signed_image_url: null,
             }
           }
@@ -75,7 +89,7 @@ export default function ChatRoom({ initialMessages }: Props) {
 
           return {
             ...msg,
-            profiles: profile,
+            profiles: displayName ? { display_name: displayName } : null,
             signed_image_url: signed?.signedUrl ?? null,
           }
         })
