@@ -4,6 +4,16 @@ import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatEuropeanDate } from '@/lib/format-date'
 
+type RawMessageRow = {
+  id: string
+  text: string | null
+  image_url: string | null
+  created_at: string
+  profiles: {
+    display_name: string
+  }[]
+}
+
 type MessageRow = {
   id: string
   text: string | null
@@ -48,10 +58,13 @@ export default function ChatRoom({ initialMessages }: Props) {
         .order('created_at', { ascending: true })
 
       const preparedMessages: MessageRow[] = await Promise.all(
-        (data ?? []).map(async (msg) => {
+        (data ?? []).map(async (msg: RawMessageRow) => {
+          const profile = msg.profiles?.[0] ?? null
+
           if (!msg.image_url) {
             return {
               ...msg,
+              profiles: profile,
               signed_image_url: null,
             }
           }
@@ -62,6 +75,7 @@ export default function ChatRoom({ initialMessages }: Props) {
 
           return {
             ...msg,
+            profiles: profile,
             signed_image_url: signed?.signedUrl ?? null,
           }
         })
