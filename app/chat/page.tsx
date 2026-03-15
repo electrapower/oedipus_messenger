@@ -35,6 +35,15 @@ export default async function ChatPage() {
   if (!user)
     redirect('/login')
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.display_name)
+    redirect('/setup-profile')
+
   const { data: messages } = await supabase
     .from('messages')
     .select(`
@@ -91,7 +100,7 @@ export default async function ChatPage() {
           }}
         >
           <div>
-            <h1 style={{ margin: 0, fontSize: 32, color: '#0F6E75' }}>Чат</h1>
+            <h1 style={{ margin: 0, fontSize: 32, color: '#0F6E75' }}>чат</h1>
             <p style={{ margin: '6px 0 0 0', color: '#734765' }}>
               эдип советует присмотреться
             </p>
